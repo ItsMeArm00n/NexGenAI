@@ -9,29 +9,22 @@ The web interface allows users to enter a company name and instantly explore:
 * Urgent alerts & risks
 * Actionable strategy recommendations
 
-## 🔗 Live API
+## Live API
 
 The underlying analysis API is hosted on Hugging Face Spaces:
-👉 [NexGen AI API on Hugging Face](https://huggingface.co/spaces/YourHFUsername/NexGen-AI)
+👉 [NexGen AI API on Hugging Face](https://huggingface.co/spaces/ItsMeArm00n/NexGen-API)
 
 The website interacts directly with this API to fetch company-specific insights.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * Frontend: Next.js + TailwindCSS
 * Backend API: Python (Hugging Face Spaces)
 * Deployment: Vercel
 
-## 🚀 Running Locally
+## Public Website
 
-```bash
-git clone https://github.com/YourUsername/NexGen-AI.git
-cd NexGen-AI
-npm install
-npm run dev
-```
-
-Visit `http://localhost:3000` to use the app locally.
+Visit `https://huggingface.co/spaces/ItsMeArm00n/NexGen-API` to use the app locally.
 
 ## 🤝 Contributing
 
