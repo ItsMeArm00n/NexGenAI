@@ -909,7 +909,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="https://github.com"
+                    href="https://github.com/ItsMeArm00n/NexGenAI"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-secondary transition-colors duration-300 flex items-center gap-2 group"
@@ -920,13 +920,13 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    href="https://huggingface.co/spaces/ItsMeArm00n/NexGen-API/tree/main"
+                    href="https://armaan-ai.vercel.app"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-accent transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <Globe className="w-4 h-4" />
-                    Hugging Face Space
+                    Portfolio
                   </a>
                 </li>
               </ul>
