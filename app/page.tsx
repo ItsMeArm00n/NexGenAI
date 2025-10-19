@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import TimeoutModal from "@/components/ui/TimeoutModal"
 import {
   Brain,
   TrendingUp,
@@ -32,6 +33,8 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showErrorModal, setShowErrorModal] = useState(false)
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false)
+  const [timeoutMessage, setTimeoutMessage] = useState<string>("")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [expandedContent, setExpandedContent] = useState<{ title: string; content: string } | null>(null)
 
@@ -97,6 +100,18 @@ export default function Home() {
     setIsLoading(true)
     setPulseData(null)
 
+    // Use AbortController to implement a client-side timeout (9s)
+    const controller = new AbortController()
+  const timeoutMs = 10000
+    const timeoutHandle = setTimeout(() => {
+      // abort the fetch; this will throw a DOMException with name 'AbortError'
+      controller.abort()
+      setTimeoutMessage(
+        "The API is taking too long. It may be asleep. Please restart it using the link 'API Source (Hugging Face)' in the footer."
+      )
+      setShowTimeoutModal(true)
+    }, timeoutMs)
+
     try {
       const response = await fetch("https://ItsMeArm00n-NexGen-API.hf.space/generate_pulse", {
         method: "POST",
@@ -104,29 +119,52 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ company: keyword }),
+        signal: controller.signal,
       })
 
+      // clear the timeout once we have a response
+      clearTimeout(timeoutHandle)
+
       if (!response.ok) {
-        throw new Error("Failed to fetch pulse data")
+        // unexpected non-2xx response
+        console.error("[v0] Non-OK response status:", response.status)
+        setTimeoutMessage(
+          "The API returned an error status. It may be asleep or out of credits. Please restart it using the link 'API Source (Hugging Face)' in the footer.",
+        )
+        setShowTimeoutModal(true)
+        return
       }
 
       const data = await response.json()
       console.log("[v0] API Response:", data)
 
-      if (
-        !data ||
-        typeof data !== "object" ||
-        (!data.FullMarketAnalysis && !data.CompetitorActivity && !data.CustomerSentiment)
-      ) {
-        throw new Error("Invalid API response format")
+      // basic validation: ensure we have useful fields
+      if (!data || typeof data !== "object" || (!data.FullMarketAnalysis && !data.CompetitorActivity && !data.CustomerSentiment)) {
+        setTimeoutMessage(
+          "The API returned an unexpected response. It may be asleep or misconfigured. Please restart it using the link 'API Source (Hugging Face)' in the footer.",
+        )
+        setShowTimeoutModal(true)
+        return
       }
 
       setPulseData(data)
       localStorage.setItem("pulseData", JSON.stringify(data))
       setShowModal(true)
-    } catch (error) {
-      console.error("[v0] Error fetching pulse data:", error)
-      setShowErrorModal(true)
+    } catch (error: any) {
+      // clear timeout if an exception occurred before it fired
+      clearTimeout(timeoutHandle)
+
+      // If fetch was aborted due to timeout, show the timeout modal with message
+      if (error?.name === "AbortError") {
+        console.warn("[v0] Fetch aborted (timeout)")
+        setTimeoutMessage(
+          "The API is taking too long. It may be asleep. Please restart it using the link 'API Source (Hugging Face)' in the footer.",
+        )
+        setShowTimeoutModal(true)
+      } else {
+        console.error("[v0] Error fetching pulse data:", error)
+        setShowErrorModal(true)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -142,6 +180,10 @@ export default function Home() {
 
   const closeErrorModal = () => {
     setShowErrorModal(false)
+  }
+
+  const closeTimeoutModal = () => {
+    setShowTimeoutModal(false)
   }
 
   const handleExpand = (title: string, content: string) => {
@@ -242,7 +284,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
+  <section className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
         <div className="absolute inset-0 overflow-hidden">
           {/* Primary gradient layer */}
           <div
@@ -362,7 +404,7 @@ export default function Home() {
           className={`relative z-10 max-w-6xl mx-auto text-center transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
         >
           {/* Badge with enhanced styling */}
-          <div className="inline-flex items-center gap-2 mb-8 px-5 py-2.5 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 backdrop-blur-md rounded-full text-sm border border-primary/40 hover:border-primary/60 hover:scale-105 transition-all duration-300 glow-effect">
+          <div className="inline-flex items-center gap-2 mb-8 mt-8 px-5 py-2.5 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 backdrop-blur-md rounded-full text-sm border border-primary/40 hover:border-primary/60 hover:scale-105 transition-all duration-300 glow-effect">
             <Sparkles className="w-4 h-4 text-primary animate-pulse" />
             <span className="font-semibold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
               NexGen AI
@@ -405,35 +447,6 @@ export default function Home() {
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
               </span>
             </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className="group relative border-2 border-primary/60 hover:border-primary bg-background/50 backdrop-blur-md hover:bg-primary/10 transition-all duration-300 text-lg px-10 py-7 font-semibold overflow-hidden hover:scale-105 hover:shadow-xl hover:shadow-primary/20"
-            >
-              {/* Button background effect */}
-              <span className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-              <span className="relative flex items-center gap-2">
-                <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                Watch Demo
-              </span>
-            </Button>
-          </div>
-
-          {/* Social proof or trust indicators */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground/70">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              <span>Trusted by 10,000+ companies</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-secondary" />
-              <span>Real-time insights</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-accent" />
-              <span>AI-powered analysis</span>
-            </div>
           </div>
         </div>
       </section>
@@ -593,6 +606,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+  {/* Timeout / Slow API Modal (reusable) */}
+  <TimeoutModal open={showTimeoutModal} title="API Timeout" message={timeoutMessage} onClose={closeTimeoutModal} />
 
       {showModal && pulseData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdrop-fade-in">
@@ -880,15 +896,6 @@ export default function Home() {
                     How It Works
                   </a>
                 </li>
-                <li>
-                  <button
-                    onClick={scrollToDemo}
-                    className="text-muted-foreground hover:text-primary transition-colors duration-300 flex items-center gap-2 group"
-                  >
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    Try It Now
-                  </button>
-                </li>
               </ul>
             </div>
 
@@ -904,7 +911,7 @@ export default function Home() {
                     className="text-muted-foreground hover:text-primary transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <Globe className="w-4 h-4" />
-                    API Documentation
+                    API Source (Hugging Face)
                   </a>
                 </li>
                 <li>
@@ -915,7 +922,7 @@ export default function Home() {
                     className="text-muted-foreground hover:text-secondary transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <Globe className="w-4 h-4" />
-                    GitHub Repository
+                    Website Source (GitHub)
                   </a>
                 </li>
                 <li>
@@ -926,7 +933,7 @@ export default function Home() {
                     className="text-muted-foreground hover:text-accent transition-colors duration-300 flex items-center gap-2 group"
                   >
                     <Globe className="w-4 h-4" />
-                    Portfolio
+                    Developer Portfolio
                   </a>
                 </li>
               </ul>
@@ -934,7 +941,7 @@ export default function Home() {
           </div>
 
           {/* Copyright and Developer Credit */}
-          <div className="pt-8 border-t border-border/50">
+          <div className="pt-6 border-t border-border/50">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
               <p>© 2025 NexGen AI. All rights reserved.</p>
               <p>

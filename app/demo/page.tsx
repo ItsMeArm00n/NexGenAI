@@ -393,7 +393,12 @@ export default function DemoPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={(entry: any) => {
+                          const name = entry?.name ?? ''
+                          const percentRaw = entry?.percent
+                          const percent = typeof percentRaw === 'number' ? percentRaw : Number(percentRaw) || 0
+                          return `${name}: ${(percent * 100).toFixed(0)}%`
+                        }}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
@@ -434,7 +439,6 @@ export default function DemoPage() {
                         stroke="#64748b"
                         tick={{ fill: "#ffffff", fontSize: 14, fontWeight: 600 }}
                         label={{
-                          value: "Market Share (%)",
                           position: "insideBottom",
                           offset: -5,
                           fill: "#ffffff",
@@ -450,7 +454,10 @@ export default function DemoPage() {
                         width={90}
                       />
                       <Tooltip
-                        formatter={(value) => [`${value}%`, "Market Share"]}
+                        formatter={(value) => [
+                          <span style={{ color: '#fff', fontWeight: 600 }}>{`Market Share : ${value}%`}</span>,
+                          ''
+                        ]}
                         contentStyle={{
                           backgroundColor: "#1e293b",
                           border: "2px solid #3b82f6",

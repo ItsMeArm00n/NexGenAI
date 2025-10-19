@@ -406,7 +406,12 @@ export default function DetailsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={(entry: any) => {
+                          const name = entry?.name ?? ''
+                          const percentRaw = entry?.percent
+                          const percent = typeof percentRaw === 'number' ? percentRaw : Number(percentRaw) || 0
+                          return `${name}: ${(percent * 100).toFixed(0)}%`
+                        }}
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
@@ -447,7 +452,6 @@ export default function DetailsPage() {
                         stroke="#64748b"
                         tick={{ fill: "#ffffff", fontSize: 14, fontWeight: 600 }}
                         label={{
-                          value: "Market Share (%)",
                           position: "insideBottom",
                           offset: -5,
                           fill: "#ffffff",
@@ -533,7 +537,7 @@ export default function DetailsPage() {
                 </h3>
                 {wordCloudData.length > 0 ? (
                   <div className="h-[300px] flex flex-wrap items-center justify-center gap-4 p-4">
-                    {wordCloudData.map((item, index) => (
+                    {wordCloudData.map((item: any, index: number) => (
                       <div
                         key={index}
                         className="inline-block px-3 py-2 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-lg border border-primary/30 hover:border-primary/60 hover:scale-110 transition-all duration-300 cursor-pointer animate-word-scale-in"
